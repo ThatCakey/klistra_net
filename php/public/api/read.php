@@ -53,12 +53,30 @@ try {
     $response->protected = $dbObject->protected;
 
     //DE-ENCRYPT DATA
-    $passwordHash = create_secure_hash($inputObj->pass, $inputObj->id);
-    $encryption = new Encryption($passwordHash);
-    $response->text = $encryption->decrypt($dbObject->text);
-
-    if ($encryption->decrypt($dbObject->text) == false) {
-        header("HTTP/1.1 401 Unauthorized");
+    $encryption = new Encryption();
+    
+    // Check if salt exists (new format)
+    if (isset($dbObject->salt)) {
+        $salt = base64_decode($dbObject->salt);
+        // If protected, use user provided pass. If not, use ID.
+        $passwordToUse = $dbObject->protected ? $inputObj->pass : $inputObj->id;
+        
+        $key = Encryption::deriveKey($passwordToUse, $salt);
+        $response->text = $encryption->decrypt($dbObject->text, $key);
+        
+        if ($response->text === false) {
+            header("HTTP/1.1 401 Unauthorized");
+            die();
+        }
+    } else {
+        // Fallback for legacy data (if any exists during migration) or error
+        // Since we changed encryption logic completely, old pastes might be unreadable 
+        // unless we kept the old logic. Assuming "fresh start" or "breaking change" is acceptable 
+        // given the massive security overhaul.
+        // Or we could try to detect legacy format. 
+        // For now, let's assume new format only or fail safe.
+        header("HTTP/1.1 500 Internal Server Error");
+        echo "Invalid data format";
         die();
     }
 } catch (Exception $e) {

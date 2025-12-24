@@ -492,9 +492,7 @@ async function encryptJSON(jsonData) {
     ["encrypt"]
   );
 
-  const iv = new Uint8Array([
-    1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
-  ]); // Static IV
+  const iv = crypto.getRandomValues(new Uint8Array(16)); // Random IV
   const jsonStr = JSON.stringify(jsonData);
   const encoded = stringToArrayBuffer(jsonStr);
 
@@ -504,7 +502,13 @@ async function encryptJSON(jsonData) {
     encoded
   );
 
-  return arrayBufferToBase64(encryptedData);
+  // Concatenate IV + Encrypted Data
+  const encryptedBytes = new Uint8Array(encryptedData);
+  const combined = new Uint8Array(iv.length + encryptedBytes.length);
+  combined.set(iv);
+  combined.set(encryptedBytes, iv.length);
+
+  return arrayBufferToBase64(combined.buffer);
 }
 
 // Transport Decrypt (Obfuscation during transport only)
@@ -518,15 +522,18 @@ async function decryptJSON(encryptedBase64) {
     ["decrypt"]
   );
 
-  const iv = new Uint8Array([
-    1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
-  ]); // Static IV
-  const encryptedArrayBuffer = base64ToArrayBuffer(encryptedBase64);
+  const combinedBuffer = base64ToArrayBuffer(encryptedBase64);
+  const combined = new Uint8Array(combinedBuffer);
+
+  // Extract IV (first 16 bytes)
+  const iv = combined.slice(0, 16);
+  // Extract Data
+  const encryptedData = combined.slice(16);
 
   const decryptedData = await crypto.subtle.decrypt(
     { name: "AES-CBC", iv },
     key,
-    encryptedArrayBuffer
+    encryptedData
   );
 
   const decryptedString = new TextDecoder().decode(decryptedData);

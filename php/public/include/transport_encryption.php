@@ -10,12 +10,16 @@ class TransportEncryption
         }
 
         $key = $_SESSION['session_transport_token']; // Use session key
-        $iv = "\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F\x10"; // Static IV
+        
+        // Generate random IV
+        $ivLen = openssl_cipher_iv_length('aes-256-cbc');
+        $iv = openssl_random_pseudo_bytes($ivLen);
 
         $jsonStr = json_encode($jsonData);
         $encryptedData = openssl_encrypt($jsonStr, 'aes-256-cbc', $key, OPENSSL_RAW_DATA, $iv);
 
-        return base64_encode($encryptedData);
+        // Prepend IV to encrypted data
+        return base64_encode($iv . $encryptedData);
     }
 
     // Decrypt function using the session key
@@ -27,14 +31,22 @@ class TransportEncryption
         }
     
         $key = $_SESSION['session_transport_token']; // Use session key
-        $iv = "\x01\x02\x03\x04\x05\x06\x07\x08\x09\x0A\x0B\x0C\x0D\x0E\x0F\x10"; // Static IV
-    
+        
         // Decrypt the base64-encoded string
-        $encryptedData = base64_decode($encryptedBase64);
+        $data = base64_decode($encryptedBase64);
+        
+        $ivLen = openssl_cipher_iv_length('aes-256-cbc');
+        
+        if (strlen($data) < $ivLen) {
+            return null;
+        }
+        
+        $iv = substr($data, 0, $ivLen);
+        $encryptedData = substr($data, $ivLen);
+    
         $decryptedData = openssl_decrypt($encryptedData, 'aes-256-cbc', $key, OPENSSL_RAW_DATA, $iv);
     
-        // Decode JSON string into an object (by omitting the second parameter)
-        return json_decode($decryptedData); // Returns an object
+        // Decode JSON string into an object
+        return json_decode($decryptedData); 
     }
-    
 }

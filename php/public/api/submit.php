@@ -73,11 +73,27 @@ $entry = new stdClass();
 $entry->id = $id;
 $entry->timeoutUnix = $timeoutUnix;
 $entry->protected = $inputObj->passProtect;
-$entry->password = create_secure_hash($inputObj->pass, $id);
 
-//PASTE ENCRYPTION
-$encryption = new Encryption($entry->password);
-$entry->text = $encryption->encrypt($inputObj->pasteText);
+// PASTE ENCRYPTION
+// Generate a random salt for this paste
+$salt = random_bytes(SODIUM_CRYPTO_PWHASH_SALTBYTES);
+$entry->salt = base64_encode($salt); // Store salt so we can re-derive key later
+
+// Determine password to use
+// If protected, use user's password.
+// If unprotected, use the ID as the password (knowledge of ID = access).
+$passwordToUse = $inputObj->passProtect ? $inputObj->pass : $id;
+
+// Derive Key (Argon2id)
+$key = Encryption::deriveKey($passwordToUse, $salt);
+
+// Encrypt
+$encryption = new Encryption();
+$entry->text = $encryption->encrypt($inputObj->pasteText, $key);
+
+// Clear sensitive variables from memory immediately
+unset($key);
+unset($passwordToUse);
 
 $entryJSON = json_encode($entry);
 
