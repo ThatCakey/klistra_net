@@ -3,7 +3,7 @@ class RedisConn
 {
     private $redis;
     private $redisAuth = "";
-    private $redisIp = "";
+    private $redisHost = "";
     private $redisPort = 6379;
     private $connected = false;
 
@@ -12,9 +12,9 @@ class RedisConn
         if (!$this->connected) {
             try {
                 $this->redisAuth = getenv("REDIS_REQUIREPASS");
-                $this->redisIp = getenv("REDIS_IP");
+                $this->redisHost = getenv("REDIS_HOST");
                 $this->redis = new Redis();
-                $this->redis->connect($this->redisIp, $this->redisPort);
+                $this->redis->connect($this->redisHost, $this->redisPort);
                 $this->redis->auth($this->redisAuth);
             } catch (Exception $e) {
                 $this->connected = false;

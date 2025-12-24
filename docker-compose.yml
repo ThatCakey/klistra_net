@@ -1,11 +1,5 @@
 version: "3"
 
-networks:
-  net:
-    ipam:
-      config:
-        - subnet: ${SUBNET}
-
 services:
   web:
     build:
@@ -17,22 +11,16 @@ services:
       - ./php/public:/var/www/html
     environment:
       REDIS_REQUIREPASS: ${REDIS_REQUIREPASS}
-      REDIS_IP: ${REDIS_IP}
+      REDIS_HOST: redis
       ENCRYPTION_SALT: ${ENCRYPTION_SALT}
     depends_on:
       - redis
-    networks:
-      net:
-        ipv4_address: ${WEB_IP}
     restart: always
     command: ["apache2-foreground"]
     
 
   redis:
     image: redis:7.4
-    networks:
-      net:
-        ipv4_address: ${REDIS_IP}
     environment:
       - REDIS_PASSWORD=${REDIS_REQUIREPASS}
     command: redis-server --requirepass ${REDIS_REQUIREPASS} --save ${REDIS_SAVE}

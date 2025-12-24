@@ -37,8 +37,6 @@ Klistra.nu is a secure, encrypted online pastebin platform that allows you to sh
     cp .env.example .env
     ```
     Open `.env` and update the following values:
-    -   `SUBNET`: The subnet for the internal docker network.
-    -   `WEB_IP`, `REDIS_IP`: Static IPs for the services within the subnet.
     -   `WEB_PORT`: The host port to expose the web server on (e.g., `8080`).
     -   `ENCRYPTION_SALT`: **Critical.** Generate a long, random string for salt.
     -   `REDIS_REQUIREPASS`: **Critical.** Set a strong password for Redis.
