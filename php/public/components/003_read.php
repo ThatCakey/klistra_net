@@ -1,23 +1,20 @@
-<?php
-session_start(); ?>
+<?php session_start(); ?>
 
 <div class="create_container_master">
 
-<h4 id="countdown">Expires in </h4>
-<span class="material-symbols-outlined" style="float:right; margin-top:-45px; padding: 10px;" id="hiddenIcon">visibility_lock</span>
-
-<form class="createForm" autocomplete="off"">
-    
-    <textarea name="text" id="klisterarea" cols="100" rows="25">
-        
-    </textarea>
-
-    <div class="createFormSubmitWrapper">
-        <input type="button" value="Copy to Clipboard" onclick="copyToClipboard()"><br>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+        <h4 id="countdown" style="margin: 0;">Expires in...</h4>
+        <span class="material-symbols-outlined" id="hiddenIcon" title="Encrypted & Password Protected">visibility_lock</span>
     </div>
 
-</form>
+    <form class="createForm" autocomplete="off">
+        
+        <textarea name="text" id="klisterarea" readonly placeholder="Loading content..."></textarea>
+
+        <div class="createFormSubmitWrapper">
+            <input type="button" value="Copy to Clipboard" onclick="copyToClipboard()">
+        </div>
+
+    </form>
 
 </div>
-
-
