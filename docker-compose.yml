@@ -17,6 +17,14 @@ services:
       - redis
     restart: always
     command: ["apache2-foreground"]
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.klistra.rule=Host(`${DOMAIN}`)"
+      - "traefik.http.routers.klistra.entrypoints=websecure"
+      - "traefik.http.routers.klistra.tls.certresolver=le"
+      - "traefik.http.services.klistra.loadbalancer.server.port=80"
+    networks:
+      - web
     
 
   redis:
@@ -27,3 +35,31 @@ services:
     volumes:
       - ${REDIS_STORAGE_PATH}:/data
     restart: always
+    networks:
+      - web
+
+  traefik:
+    image: traefik:v2.10
+    command:
+      - "--providers.docker=true"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--certificatesresolvers.le.acme.tlschallenge=true"
+      - "--certificatesresolvers.le.acme.email=${LE_EMAIL}"
+      - "--certificatesresolvers.le.acme.storage=/letsencrypt/acme.json"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - traefik_letsencrypt:/letsencrypt
+    restart: unless-stopped
+    networks:
+      - web
+
+volumes:
+  traefik_letsencrypt:
+
+networks:
+  web:
+    driver: bridge
