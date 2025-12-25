@@ -18,9 +18,9 @@ include_once "./include/guid.php";
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description"
-        content="Low-Stack Klistra is a secure and encrypted online platform that allows you to share password protected text with peace of mind. Keep your sensitive information safe and secure with Klistra.">
+        content="Klistra is a secure and encrypted online platform that allows you to share password protected text with peace of mind. Keep your sensitive information safe and secure with Klistra.">
     <meta name="keywords"
-        content="Low-Stack Klistra, secure, encrypted, online platform, share text pastes, passwords, automatic expiry, sensitive information, safe, secure">
+        content="Klistra, secure, encrypted, online platform, share text pastes, passwords, automatic expiry, sensitive information, safe, secure">
 
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
     <title>Low-Stack Klistra</title>
@@ -34,10 +34,17 @@ include_once "./include/guid.php";
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.1/jquery.min.js"></script>
     <script src="https://unpkg.com/sweetalert/dist/sweetalert.min.js"></script>
     <script src="static/script.js"></script>
-    <link rel="stylesheet" href="./css/style.css">
-
-
+    <script>
+    (function(){
+        try {
+            var saved = localStorage.getItem('klistra-theme');
+            var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+            var theme = saved || (prefersDark ? 'dark' : 'light');
+            if (theme === 'light') document.documentElement.classList.add('light-theme');
+        } catch (e) { /* ignore */ }
+    })();
     </script>
+    <link rel="stylesheet" href="./css/style.css">
 </head>
 
 <body>

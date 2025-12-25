@@ -12,7 +12,8 @@ session_start(); ?>
 
 <div class="head_container_master" id="head_container_master">
 <a href="/">
-    <img src="/static/favicon.png" alt="Logo">
-    <h1>Low-Stack Klistra</h1>
+    <h1>LibreKlistra</h1>
 </a>
+</div>
+<button id="themeToggle" aria-label="Toggle theme" title="Toggle theme" onclick="toggleTheme()">🌗</button>
 </div>

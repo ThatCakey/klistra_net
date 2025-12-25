@@ -1,3 +1,5 @@
+document.documentElement.classList.remove('light-theme');
+
 function loadContent(divId, loadUri) {
   if (document.getElementById(divId) == null) {
     return null;
@@ -33,6 +35,16 @@ window.addEventListener("load", function () {
   if (document.getElementById("003_read_container") !== null) {
     loadReadPageData();
   }
+
+  // Ensure theme icon/state is correct after header is loaded dynamically
+  setTimeout(function () {
+    try {
+      var saved = localStorage.getItem('klistra-theme');
+      var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+      var theme = saved || (prefersDark ? 'dark' : 'light');
+      applyTheme(theme);
+    } catch (e) {}
+  }, 350);
 });
 
 //Form Submit Create Klister
@@ -353,6 +365,34 @@ function formatCountdownTime(seconds) {
 
   return result.trim();
 }
+
+/* Theme handling: apply, toggle and persist theme */
+function applyTheme(theme) {
+  if (theme === 'light') {
+    document.documentElement.classList.add('light-theme');
+  } else {
+    document.documentElement.classList.remove('light-theme');
+  }
+  try { localStorage.setItem('klistra-theme', theme); } catch (e) {}
+  var btn = document.getElementById('themeToggle');
+  if (btn) btn.textContent = theme === 'light' ? '🌙' : '🌞';
+}
+
+function toggleTheme() {
+  var isLight = document.documentElement.classList.contains('light-theme');
+  applyTheme(isLight ? 'dark' : 'light');
+  console.log("Toggled theme");
+}
+
+// On DOM ready ensure button icon matches current theme
+document.addEventListener('DOMContentLoaded', function () {
+  try {
+    var saved = localStorage.getItem('klistra-theme');
+    var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    var theme = saved || (prefersDark ? 'dark' : 'light');
+    applyTheme(theme);
+  } catch (e) {}
+});
 
 /* Github: rproenca/Clipboard.js */
 window.Clipboard = (function (window, document, navigator) {
