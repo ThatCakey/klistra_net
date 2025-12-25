@@ -2,8 +2,8 @@
 session_start(); ?>
 <div class="docs_container_master">
 <h2>Privacy Policy</h2>
-<p>Updated 2023-05-05</p>
-<p>At Low-Stack Klistra, we take your privacy very seriously. We understand that your personal information is valuable and we are committed to protecting it. This privacy policy explains how we collect, use, and protect the information you provide to us through our website.</p>
+<p>Updated 2025-12-25</p>
+<p>At Klistra.net, we take your privacy very seriously. We understand that your personal information is valuable and we are committed to protecting it. This privacy policy explains how we collect, use, and protect the information you provide to us through our website.</p>
 
 <h4>Collection of Information</h4>
 

@@ -12,7 +12,7 @@ session_start(); ?>
 
 <div class="head_container_master" id="head_container_master">
 <a href="/">
-    <h1>LibreKlistra</h1>
+    <h1>Klistra.net</h1>
 </a>
 </div>
 <button id="themeToggle" aria-label="Toggle theme" title="Toggle theme" onclick="toggleTheme()">🌗</button>

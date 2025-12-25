@@ -1,6 +1,6 @@
-# Low-Stack Klistra
+# Klistra.net
 
-Low-Stack Klistra is a secure, encrypted online pastebin platform that allows you to share password-protected text with peace of mind. It is designed to keep sensitive information safe with features like automatic expiry and strong encryption.
+Klistra.net is a secure, encrypted online pastebin platform that allows you to share password-protected text with peace of mind. It is designed to keep sensitive information safe with features like automatic expiry and strong encryption.
 
 ## Features
 

@@ -5,6 +5,6 @@ session_start(); ?>
     <p>
         <a href="/?page=privacy">Privacy Policy</a>
         -
-        <a href="https://github.com/emanueltilly/klistra_nu" target="_blank">Contribute on GitHub</a>
+        <a href="https://github.com/ThatCakey/klistra_net" target="_blank">Contribute on GitHub</a>
     </p>
 </div>
