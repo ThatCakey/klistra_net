@@ -2,7 +2,7 @@ openapi: 3.0.3
 info:
   title: Klistra.nu API
   version: 2.0.0
-  description: Secure pastebin API (RESTful)
+  description: Secure sharing API (RESTful)
 servers:
   - url: /api
 paths:

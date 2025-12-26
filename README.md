@@ -1,6 +1,6 @@
 # Klistra.nu
 
-**Klistra.nu** is a secure, encrypted, and ephemeral pastebin platform designed to share sensitive text with peace of mind. Built with a focus on privacy and security, it ensures that your data is encrypted and stored securely.
+**Klistra.nu** is a secure, encrypted, and ephemeral sharing platform designed to share sensitive text with peace of mind. Built with a focus on privacy and security, it ensures that your data is encrypted and stored securely.
 
 ## ✨ Features
 
