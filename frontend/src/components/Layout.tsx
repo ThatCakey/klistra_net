@@ -30,7 +30,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         {/* Header */}
         <header className="flex justify-between items-center bg-surface/50 backdrop-blur-md p-4 rounded-xl border border-border-color shadow-lg">
            <div className="flex items-center gap-2 cursor-pointer" onClick={() => window.location.href = '/'}>
-              <img src="/logo.svg" alt="Logo" className="h-8 w-8" onError={(e) => e.currentTarget.style.display='none'} />
               <h1 className="text-xl font-bold tracking-tighter">Klistra.nu</h1>
            </div>
            <button onClick={toggleTheme} className="p-2 rounded-full hover:bg-surface-variant transition-colors">
