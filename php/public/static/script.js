@@ -9,6 +9,17 @@ else{
   applyTheme("light");
 }
 
+const detectColorScheme = () => {
+  if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+    console.log('User prefers dark mode');
+    applyTheme("dark");
+  } else {
+    console.log('User prefers light mode');
+    applyTheme("light");
+  }
+}
+
+window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', detectColorScheme);
 
 function loadContent(divId, loadUri) {
   if (document.getElementById(divId) == null) {
