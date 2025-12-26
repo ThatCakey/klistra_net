@@ -1,5 +1,6 @@
 .env
 redis
 backend/klistra.db
+backend/tmp
 frontend/dist
 frontend/node_modules

@@ -1,18 +1,23 @@
 import { useState } from 'react';
 import { Lock, Clock, Send } from 'lucide-react';
-import Swal from 'sweetalert2';
 import { apiPost, type CreatePasteRequest } from '../api';
+import { useToast } from './ui/use-toast';
 
 export default function CreatePaste() {
   const [text, setText] = useState('');
   const [expiry, setExpiry] = useState(3600);
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const { toast } = useToast();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!text.trim()) {
-      Swal.fire('Empty Klister', 'Nothing to share? Add text!', 'warning');
+      toast({
+         title: "Empty Klister",
+         description: "Nothing to share? Add text!",
+         variant: "destructive"
+      });
       return;
     }
 
@@ -33,7 +38,11 @@ export default function CreatePaste() {
       }
     } catch (err) {
       console.error(err);
-      Swal.fire('Error', 'Failed to create Klister.', 'error');
+      toast({
+         title: "Error",
+         description: "Failed to create Klister.",
+         variant: "destructive"
+      });
     } finally {
       setLoading(false);
     }

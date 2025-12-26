@@ -3,6 +3,7 @@ import Layout from './components/Layout';
 import CreatePaste from './components/CreatePaste';
 import ViewPaste from './components/ViewPaste';
 import Privacy from './components/Privacy';
+import { Toaster } from './components/ui/toaster';
 import './index.css';
 
 // Wrapper to get ID from params
@@ -20,6 +21,7 @@ function App() {
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/:id" element={<ViewPasteWrapper />} />
         </Routes>
+        <Toaster />
       </Layout>
     </BrowserRouter>
   );

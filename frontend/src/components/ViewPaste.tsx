@@ -1,14 +1,16 @@
 import { useEffect, useState } from 'react';
-import { Copy, Clock, Lock, AlertTriangle, FileText } from 'lucide-react';
-import Swal from 'sweetalert2';
+import { Copy, Clock, Lock, AlertTriangle, FileText, Unlock } from 'lucide-react';
 import { apiPost, type Paste } from '../api';
+import { useToast } from './ui/use-toast';
 
 export default function ViewPaste({ id }: { id: string }) {
   const [paste, setPaste] = useState<Paste | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [isProtected, setIsProtected] = useState(false);
+  const [password, setPassword] = useState('');
   const [timeLeft, setTimeLeft] = useState('');
+  const { toast } = useToast();
 
   useEffect(() => {
     checkStatus();
@@ -52,7 +54,6 @@ export default function ViewPaste({ id }: { id: string }) {
          if (status.protected) {
             setIsProtected(true);
             setLoading(false);
-            promptPassword();
          } else {
             fetchPaste();
          }
@@ -66,21 +67,13 @@ export default function ViewPaste({ id }: { id: string }) {
     }
   };
 
-  const promptPassword = async () => {
-     const { value: pass } = await Swal.fire({
-        title: 'Enter Password',
-        input: 'password',
-        inputLabel: 'This paste is protected',
-        inputPlaceholder: 'Enter your password',
-        background: 'var(--color-surface)',
-        color: 'var(--color-on-surface)',
-        confirmButtonColor: 'var(--color-primary)',
-        allowOutsideClick: false
-     });
-
-     if (pass) {
-        fetchPaste(pass);
+  const handleUnlock = async (e: React.FormEvent) => {
+     e.preventDefault();
+     if (!password) {
+        toast({ title: "Password Required", variant: "destructive" });
+        return;
      }
+     fetchPaste(password);
   };
 
   const fetchPaste = async (pass: string = '') => {
@@ -91,13 +84,21 @@ export default function ViewPaste({ id }: { id: string }) {
            setPaste(data);
            setIsProtected(false);
         } else {
-           Swal.fire('Error', 'Incorrect password or failed to decrypt.', 'error').then(() => {
-              if (data.protected) promptPassword();
-           });
+             // Should not happen if API returns 401/error, which throws
+             toast({
+                title: "Error",
+                description: "Incorrect password or failed to decrypt.",
+                variant: "destructive"
+             });
         }
      } catch (e) {
         console.error(e);
-        setError('Failed to load paste.');
+        toast({
+           title: "Error",
+           description: "Incorrect password.", // Usually 401
+           variant: "destructive"
+        });
+        setLoading(false); // Stop loading to let user try again if protected
      } finally {
         setLoading(false);
      }
@@ -106,15 +107,9 @@ export default function ViewPaste({ id }: { id: string }) {
   const copyToClipboard = () => {
      if (paste?.text) {
         navigator.clipboard.writeText(paste.text);
-        Swal.fire({
-           icon: 'success',
-           title: 'Copied!',
-           toast: true,
-           position: 'top-end',
-           showConfirmButton: false,
-           timer: 1500,
-           background: 'var(--color-surface)',
-           color: 'var(--color-on-surface)'
+        toast({
+           title: "Copied!",
+           description: "Copied to clipboard.",
         });
      }
   };
@@ -136,10 +131,34 @@ export default function ViewPaste({ id }: { id: string }) {
 
   if (isProtected && !paste) {
      return (
-        <div className="text-center p-10 flex flex-col items-center gap-4">
-           <Lock size={48} className="text-warning" />
-           <p>Waiting for password...</p>
-           <button onClick={promptPassword} className="text-primary hover:underline">Re-enter password</button>
+        <div className="bg-surface/80 backdrop-blur-md rounded-xl p-8 border border-border-color shadow-xl max-w-md mx-auto">
+           <div className="flex flex-col items-center gap-6 text-center">
+              <div className="p-4 bg-surface-variant rounded-full">
+                 <Lock size={48} className="text-warning" />
+              </div>
+              <div>
+                 <h2 className="text-xl font-bold mb-2">Password Protected</h2>
+                 <p className="text-subtle-gray">This paste is encrypted. Enter the password to view it.</p>
+              </div>
+              
+              <form onSubmit={handleUnlock} className="w-full space-y-4">
+                 <input
+                    type="password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Enter password"
+                    className="w-full px-4 py-2 bg-input-bg border border-border-color rounded-lg focus:outline-none focus:ring-2 focus:ring-primary text-center"
+                    autoFocus
+                 />
+                 <button 
+                    type="submit"
+                    disabled={loading}
+                    className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-primary-variant text-white px-4 py-2 rounded-lg font-medium transition-colors"
+                 >
+                    {loading ? <div className="animate-spin h-5 w-5 border-2 border-white border-t-transparent rounded-full"></div> : <>Unlock <Unlock size={18} /></>}
+                 </button>
+              </form>
+           </div>
         </div>
      );
   }
