@@ -50,6 +50,7 @@ func main() {
 	r.Static("/assets", "../frontend/dist/assets")
 	r.StaticFile("/favicon.svg", "../frontend/dist/favicon.svg")
 	r.StaticFile("/sitemap.xml", "../frontend/dist/sitemap.xml")
+	r.StaticFile("/robots.txt", "../frontend/dist/robots.txt")
 	
 	// SPA Fallback
 	r.NoRoute(func(c *gin.Context) {
