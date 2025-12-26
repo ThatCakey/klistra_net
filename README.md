@@ -1,21 +1,21 @@
 # Klistra.nu
 
-**Klistra.nu** is a secure, encrypted, and ephemeral pastebin platform designed to share sensitive text with peace of mind. Built with a focus on privacy and security, it ensures that your data is encrypted before it even leaves your browser (transport encryption) and stored securely with AES-256-GCM encryption.
+**Klistra.nu** is a secure, encrypted, and ephemeral pastebin platform designed to share sensitive text with peace of mind. Built with a focus on privacy and security, it ensures that your data is encrypted and stored securely.
 
 ## ✨ Features
 
-- **🔐 Strong Encryption:** All pastes are encrypted using `AES-256-GCM`.
+- **🔐 Strong Encryption:** All pastes are encrypted using `XChaCha20-Poly1305`.
 - **🛡️ Password Protection:** Optional password protection for your pastes.
-- **⏳ Automatic Expiry:** Set a validity period (from 1 minute to 1 week). Pastes are automatically deleted from Redis after expiry.
-- **🌓 Dark & Light Mode:** A modern, responsive UI built with Tailwind CSS that adapts to your system preferences.
-- **⚡ High Performance:** Powered by a lightweight PHP backend and Redis for lightning-fast ephemeral storage.
+- **⏳ Automatic Expiry:** Set a validity period (from 1 minute to 1 week). Pastes are automatically deleted from the database after expiry.
+- **🌓 Dark & Light Mode:** A modern, responsive UI built with React and Tailwind CSS that adapts to your system preferences.
+- **⚡ High Performance:** Powered by a high-performance Go backend and SQLite for efficient storage.
 - **🕵️ Privacy First:** Minimal data retention. No database persistence beyond the specified expiry time.
 
 ## 🛠️ Technology Stack
 
-- **Backend:** PHP 8.x
-- **Database:** Redis 7.4 (used for ephemeral key-value storage)
-- **Frontend:** HTML5, JavaScript (Vanilla), Tailwind CSS (via CDN)
+- **Backend:** Go (Golang) 1.25+ with Gin framework
+- **Database:** SQLite (used for local persistent storage)
+- **Frontend:** React, Vite, Tailwind CSS
 - **Containerization:** Docker & Docker Compose
 
 ## 🚀 Getting Started
@@ -43,14 +43,11 @@ Follow these instructions to get a copy of the project up and running on your lo
     
     Open `.env` in your favorite editor and configure the following:
     - `WEB_PORT`: The port to expose the web interface on (e.g., `8080`).
-    - `ENCRYPTION_SALT`: **Critical.** A long, random string used for salt generation.
-    - `REDIS_REQUIREPASS`: **Critical.** A strong password for your Redis instance.
-    - `REDIS_STORAGE_PATH`: The local path where Redis will persist data (e.g., `./redis/data`).
 
 3.  **Build and Run**
-    Start the application using Docker Compose:
+    Start the application using Docker Compose (Development):
     ```bash
-    docker-compose up -d --build
+    docker-compose -f docker-compose.dev.yml up --build
     ```
 
 4.  **Access the Application**
@@ -61,108 +58,78 @@ Follow these instructions to get a copy of the project up and running on your lo
 
 ```
 klistra_nu/
-├── docker-compose.yml      # Main service orchestration
+├── docker-compose.yml      # Production service orchestration
+├── docker-compose.dev.yml  # Development service orchestration
 ├── .env.example            # Environment variable template
-├── php/
-│   └── public/             # Web root
-│       ├── api/            # Backend API endpoints (submit, read, etc.)
-│       ├── components/     # UI components (header, footer, forms)
-│       ├── include/        # Core logic (Encryption, Redis, IDs)
-│       └── static/         # JS, CSS, and assets
-└── dockerfiles/            # Docker build configurations
+├── backend/                # Go Backend
+│   ├── cmd/                # Entrypoints
+│   ├── handlers/           # HTTP Handlers
+│   ├── models/             # Data Models
+│   ├── services/           # Core Logic (Encryption, DB)
+│   └── main.go             # Application entry point
+├── frontend/               # React Frontend
+│   ├── src/                # Source code
+│   └── vite.config.ts      # Vite Configuration
+└── Dockerfile              # Multi-stage Docker build
 ```
 
 ## 🔒 Security Architecture
 
-Klistra.nu implements a multi-layered security approach:
+Klistra.nu implements a robust security approach:
 
-1.  **Transport Layer:** Standard HTTPS (when deployed with a reverse proxy like Nginx/Traefik).
+1.  **Transport Layer:** Standard HTTPS (when deployed with a reverse proxy).
 2.  **Application Layer:** 
-    -   **Content Encryption:** Paste content is encrypted using `AES-256-GCM` with a key derived from the user's password (or a system-generated one) and the server-side salt.
-    -   **Transport Encryption:** A custom encryption layer creates a secure tunnel for submission data, adding an extra layer of protection during transit.
+    -   **Content Encryption:** Paste content is encrypted using `XChaCha20-Poly1305`.
+    -   **Key Derivation:** Keys are derived using Argon2id with a unique, random salt generated for every paste.
+    -   **Zero-Knowledge (Partial):** For unprotected pastes, the ID acts as the decryption key. For protected pastes, the password is required to derive the key.
 
 ## 🔌 API Reference
 
-Klistra.nu exposes a RESTful API. Note that most endpoints require a custom Transport Encryption layer.
-
-### Transport Encryption
-
-To ensure data privacy even before it reaches the core encryption logic, the API uses a session-based transport encryption.
-1.  **Algorithm:** `AES-256-CBC`
-2.  **Key:** Obtained from `/api/token.php` (Session Token)
-3.  **Format:** `Base64(IV + EncryptedData)` where IV is the first 16 bytes.
+Klistra.nu exposes a RESTful API defined by the OpenAPI specification (`openapi.yaml`).
 
 ### Endpoints
 
-#### 1. Get Session Token
-Initializes a secure session and returns the encryption key.
+#### 1. Create Paste
+Creates a new paste.
 
-*   **URL:** `/api/token.php`
-*   **Method:** `GET`
-*   **Response:** `JSON`
-    ```json
-    { "key": "32_BYTE_HEX_STRING" }
-    ```
-
-#### 2. Check Protection Status
-Checks if a specific paste ID requires a password.
-
-*   **URL:** `/api/protected.php`
+*   **URL:** `/api/pastes`
 *   **Method:** `POST`
-*   **Payload:** `JSON`
-    ```json
-    { "id": "PASTE_ID" }
-    ```
-*   **Response:** `JSON`
-    ```json
-    { "protected": true }
-    ```
-
-#### 3. Submit Paste
-Creates a new paste. The payload **must** be encrypted using the Transport Encryption described above.
-
-*   **URL:** `/api/submit.php`
-*   **Method:** `POST`
-*   **Encrypted Payload Structure:**
+*   **Payload:**
     ```json
     {
-      "expiry": 3600,             // Expiry in seconds (60 - 604800)
+      "expiry": 3600,             // Expiry in seconds
       "passProtect": true,        // Enable password protection
-      "pass": "UserPassword",     // Password (required if passProtect is true)
+      "pass": "UserPassword",     // Password (optional)
       "pasteText": "Secret Content"
     }
     ```
-*   **Response:** `Text/Plain` (The ID of the created paste)
-
-#### 4. Read Paste
-Retrieves a paste. The payload **must** be encrypted.
-
-*   **URL:** `/api/read.php`
-*   **Method:** `POST`
-*   **Encrypted Payload Structure:**
+*   **Response:** `JSON`
     ```json
     {
       "id": "PASTE_ID",
-      "pass": "UserPassword"      // Required if protected
+      "protected": true,
+      "timeoutUnix": 1234567890
     }
     ```
-*   **Response:** `Text/Plain` (Base64 Encrypted JSON).
-    *   **Decrypted Response Structure:**
-        ```json
-        {
-          "id": "PASTE_ID",
-          "timeoutUnix": 1234567890,
-          "protected": true,
-          "text": "Secret Content"
-        }
-        ```
+
+#### 2. Get Paste
+Retrieves a paste.
+
+*   **URL:** `/api/pastes/{id}`
+*   **Method:** `GET`
+*   **Headers:**
+    - `X-Paste-Password`: Password (if protected)
+*   **Response:** `JSON`
+    ```json
+    {
+      "id": "PASTE_ID",
+      "text": "Decrypted Content",
+      "protected": true,
+      "timeoutUnix": 1234567890
+    }
+    ```
+    *If the paste is protected and no password is provided, `text` will be null.*
 
 ## 🤝 Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
-
-1.  Fork the Project
-2.  Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-3.  Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
-4.  Push to the Branch (`git push origin feature/AmazingFeature`)
-5.  Open a Pull Request

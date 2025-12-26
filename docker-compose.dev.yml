@@ -1,0 +1,12 @@
+services:
+  klistra:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "${WEB_PORT}:8080"
+    volumes:
+      - ./backend/klistra.db:/app/backend/klistra.db
+    environment:
+      - DB_PATH=klistra.db
+    restart: unless-stopped

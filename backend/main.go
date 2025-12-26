@@ -1,6 +1,7 @@
 package main
 
 import (
+	"os"
 	"time"
 
 	"github.com/gin-contrib/sessions"
@@ -26,7 +27,11 @@ func main() {
 	r := gin.Default()
 
 	// Session Store
-	store := cookie.NewStore([]byte("secret")) // TODO: Move secret to env
+	sessionSecret := os.Getenv("SESSION_SECRET")
+	if sessionSecret == "" {
+		sessionSecret = "default-secret-change-me"
+	}
+	store := cookie.NewStore([]byte(sessionSecret))
 	r.Use(sessions.Sessions("mysession", store))
 
 	// CORS? PHP had Allow-Origin *
@@ -61,5 +66,9 @@ func main() {
 	apiGroup := r.Group("/api")
 	api.RegisterHandlers(apiGroup, server)
 
-	r.Run(":8080")
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+	r.Run(":" + port)
 }
