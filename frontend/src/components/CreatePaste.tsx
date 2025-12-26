@@ -146,7 +146,7 @@ export default function CreatePaste() {
   return (
     <div className="relative group">
       {/* Decorative Gradient Border */}
-      <div className="absolute -inset-[1px] bg-gradient-to-r from-primary/20 to-primary-variant/20 rounded-2xl blur-[1px] group-focus-within:from-primary/40 group-focus-within:to-primary-variant/40 transition-all duration-500"></div>
+      <div className="absolute -inset-[1px] bg-gradient-to-r from-primary/20 to-primary-variant/20 rounded-2xl blur-[1px] group-focus-within:from-primary/40 group-focus-within:to-primary-variant/40"></div>
       
       <div className="relative bg-surface/80 backdrop-blur-xl rounded-2xl p-6 border border-white/5 shadow-2xl overflow-hidden">
         {/* Subtle inner glow */}

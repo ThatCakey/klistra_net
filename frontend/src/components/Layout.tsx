@@ -63,10 +63,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     <div className="relative flex flex-col items-center min-h-screen p-4 bg-gradient-to-br from-background via-gradient-mid to-background font-mono text-on-background overflow-x-hidden">
       {/* Background Glows */}
       <div className="fixed inset-0 pointer-events-none -z-10 overflow-hidden">
-        <div className="absolute -top-[10%] -left-[10%] w-[60%] h-[60%] bg-primary/20 rounded-full blur-[120px] animate-pulse-slow"></div>
-        <div className="absolute top-[20%] -right-[10%] w-[50%] h-[50%] bg-secondary/15 rounded-full blur-[100px] animate-pulse-slow [animation-delay:2s]"></div>
-        <div className="absolute -bottom-[10%] left-[10%] w-[60%] h-[60%] bg-accent/15 rounded-full blur-[110px] animate-pulse-slow [animation-delay:4s]"></div>
-        <div className="absolute top-[40%] left-[30%] w-[30%] h-[30%] bg-primary-variant/10 rounded-full blur-[80px] animate-pulse-slow [animation-delay:1s]"></div>
+        <div className="absolute -top-[10%] -left-[10%] w-[60%] h-[60%] bg-primary/20 rounded-full blur-[120px]"></div>
+        <div className="absolute top-[20%] -right-[10%] w-[50%] h-[50%] bg-secondary/15 rounded-full blur-[100px]"></div>
+        <div className="absolute -bottom-[10%] left-[10%] w-[60%] h-[60%] bg-accent/15 rounded-full blur-[110px]"></div>
+        <div className="absolute top-[40%] left-[30%] w-[30%] h-[30%] bg-primary-variant/10 rounded-full blur-[80px]"></div>
       </div>
 
       {/* Noise Overlay for Color Banding Fix */}

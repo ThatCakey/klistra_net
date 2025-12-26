@@ -1,8 +1,11 @@
-import { useEffect, useState } from 'react';
-import { Copy, Clock, Lock, AlertTriangle, FileText, Unlock, Download, Paperclip } from 'lucide-react';
+import { useEffect, useState, useMemo } from 'react';
+import { Copy, Clock, Lock, AlertTriangle, FileText, Unlock, Download, Paperclip, Code } from 'lucide-react';
 import { getPaste, type Paste } from '../api';
 import { useToast } from './ui/use-toast';
 import { decryptFile, deriveKeys, decryptData, base64ToKey } from '../lib/crypto';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { dracula, oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import hljs from 'highlight.js';
 
 export default function ViewPaste({ id }: { id: string }) {
   const [paste, setPaste] = useState<Paste | null>(null);
@@ -14,7 +17,17 @@ export default function ViewPaste({ id }: { id: string }) {
   const [password, setPassword] = useState('');
   const [timeLeft, setTimeLeft] = useState('');
   const [downloading, setDownloading] = useState<Record<number, boolean>>({});
+  const [isHighlighted, setIsHighlighted] = useState(true);
   const { toast } = useToast();
+
+  const detectedLanguage = useMemo(() => {
+    if (!decryptedText) return 'text';
+    const result = hljs.highlightAuto(decryptedText);
+    // Only trust the auto-detection if it has a certain relevance
+    return result.relevance > 5 ? result.language : 'text';
+  }, [decryptedText]);
+
+  const isLight = document.documentElement.classList.contains('light');
 
   useEffect(() => {
     fetchPaste();
@@ -245,7 +258,7 @@ export default function ViewPaste({ id }: { id: string }) {
   return (
     <div className="relative group">
       {/* Decorative Gradient Border */}
-      <div className="absolute -inset-[1px] bg-gradient-to-r from-primary/20 to-primary-variant/20 rounded-2xl blur-[1px] transition-all duration-500"></div>
+      <div className="absolute -inset-[1px] bg-gradient-to-r from-primary/20 to-primary-variant/20 rounded-2xl blur-[1px]"></div>
 
       <div className="relative bg-surface/80 backdrop-blur-xl rounded-2xl p-6 border border-white/5 shadow-2xl flex flex-col gap-5">
         <div className="flex justify-between items-center border-b border-border-color/30 pb-4">
@@ -268,13 +281,55 @@ export default function ViewPaste({ id }: { id: string }) {
         </div>
 
         {decryptedText && (
-          <div className="relative group/textarea">
-             <textarea
-                readOnly
-                value={decryptedText}
-                className="w-full h-96 bg-input-bg/50 border border-border-color/50 rounded-xl p-5 text-on-surface focus:outline-none resize-none font-mono backdrop-blur-sm transition-all"
-             />
+          <div className="relative group/textarea min-h-96">
+             {isHighlighted && detectedLanguage !== 'text' ? (
+                <div className="w-full h-96 min-h-[24rem] bg-input-bg/50 border border-border-color/50 rounded-xl overflow-auto backdrop-blur-sm resize-y">
+                  <SyntaxHighlighter
+                    language={detectedLanguage || 'text'}
+                    style={isLight ? oneLight : dracula}
+                    customStyle={{
+                      margin: 0,
+                      padding: '1.25rem',
+                      minHeight: '100%',
+                      background: 'transparent',
+                      fontSize: '0.875rem',
+                      lineHeight: '1.5',
+                    }}
+                    lineNumberStyle={{
+                      minWidth: '2.5em',
+                      paddingRight: '1.25em',
+                      color: '#6e6e73',
+                      textAlign: 'right',
+                      userSelect: 'none',
+                      opacity: 0.5,
+                      borderRight: '1px solid rgba(128, 128, 128, 0.1)',
+                      marginRight: '1.25em',
+                    }}
+                    showLineNumbers={true}
+                  >
+                    {decryptedText}
+                  </SyntaxHighlighter>
+                </div>
+             ) : (
+                <textarea
+                   readOnly
+                   value={decryptedText}
+                   className="w-full h-96 min-h-[24rem] bg-input-bg/50 border border-border-color/50 rounded-xl p-5 text-on-surface focus:outline-none resize-y font-mono backdrop-blur-sm"
+                />
+             )}
+             
              <div className="absolute top-4 right-4 flex gap-2">
+               {detectedLanguage !== 'text' && (
+                 <button
+                    onClick={() => setIsHighlighted(!isHighlighted)}
+                    className={`p-2.5 backdrop-blur-md rounded-xl border border-border-color/50 transition-all shadow-lg group/toggle ${
+                      isHighlighted ? 'bg-primary text-white border-primary/50' : 'bg-surface/80 hover:bg-surface-variant'
+                    }`}
+                    title={isHighlighted ? "Show Raw Text" : "Show Highlighted Code"}
+                 >
+                    <Code size={18} />
+                 </button>
+               )}
                <button 
                   onClick={copyToClipboard}
                   className="p-2.5 bg-surface/80 backdrop-blur-md hover:bg-primary hover:text-white rounded-xl border border-border-color/50 transition-all shadow-lg group/copy"
@@ -283,6 +338,12 @@ export default function ViewPaste({ id }: { id: string }) {
                   <Copy size={18} className="group-active/copy:scale-90 transition-transform" />
                </button>
              </div>
+
+             {isHighlighted && detectedLanguage !== 'text' && (
+               <div className="absolute bottom-4 right-6 text-[10px] font-black uppercase tracking-widest text-subtle-gray bg-surface/80 backdrop-blur-md px-2 py-1 rounded border border-border-color/50 pointer-events-none">
+                 {detectedLanguage}
+               </div>
+             )}
           </div>
         )}
 
