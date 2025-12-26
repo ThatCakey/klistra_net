@@ -44,6 +44,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
            <p>&copy; {new Date().getFullYear()} Klistra.nu. Secure & Encrypted.</p>
            <div className="flex justify-center gap-4 mt-2">
              <a href="/privacy" className="hover:text-primary transition-colors">Privacy</a>
+             <a href="/api" className="hover:text-primary transition-colors">API</a>
              <a href="https://github.com/esaiaswestberg/klistra_nu" target="_blank" className="hover:text-primary transition-colors">GitHub</a>
            </div>
         </footer>
