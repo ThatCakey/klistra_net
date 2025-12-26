@@ -12,7 +12,7 @@ export default function Privacy() {
           We do not collect any personal information about our users. We do not use cookies for tracking purposes.
         </p>
         <p>
-          When you create a "Klister" (paste), we store the encrypted text content, encrypted file metadata, and the expiration time you specify.
+          When you create a "Klister" (paste), we store the encrypted text content, encrypted file metadata, and the expiration time you specify. These are stored as encrypted blobs that we cannot read.
         </p>
 
         <h3 className="text-xl font-semibold mt-4 text-secondary">Data Storage & Encryption</h3>
@@ -20,11 +20,12 @@ export default function Privacy() {
           All data is stored using industry-standard, post-quantum resistant encryption.
         </p>
         <ul className="list-disc list-inside space-y-2 ml-4">
-          <li><strong>Text:</strong> Encrypted using <code>XChaCha20-Poly1305</code> with keys derived via <code>Argon2id</code>.</li>
-          <li><strong>Files:</strong> Encrypted locally in your browser using <code>AES-256-GCM</code> before upload. The decryption keys are stored within the encrypted paste metadata and are never accessible to us or the file storage provider.</li>
+          <li><strong>Text & Files:</strong> Encrypted locally in your browser using <code>AES-256-GCM</code> before being sent to our servers.</li>
+          <li><strong>Keys:</strong> For password-protected pastes, decryption keys are derived locally from your password using <code>Argon2id</code> and never leave your browser (Zero-Knowledge). For unprotected pastes, a random key is generated and stored on our server to allow anyone with the link to view the content.</li>
+          <li><strong>Passwords:</strong> We never receive your password. For protected pastes, we only receive a non-reversible cryptographic hash used to authorize access to your encrypted data.</li>
         </ul>
         <p className="mt-4">
-          This "Zero-Knowledge" architecture ensures that only you and those you share the link with can access the raw content. We do not have access to your passwords, decryption keys, or the raw content of your pastes.
+          This architecture ensures that for password-protected content, only you and those you share the password with can access the raw data.
         </p>
 
         <h3 className="text-xl font-semibold mt-4 text-secondary">Data Retention</h3>

@@ -4,7 +4,7 @@
 
 ## ✨ Features
 
-- **🔐 Strong Encryption:** Text pastes are encrypted using `XChaCha20-Poly1305`.
+- **🔐 Strong Encryption:** Text pastes are encrypted using `AES-256-GCM`.
 - **📁 Multi-File Support:** Securely share multiple files alongside your text.
 - **🛡️ Client-Side File Encryption:** Files are encrypted in your browser using `AES-256-GCM` before upload, ensuring zero-knowledge storage.
 - **⚛️ Post-Quantum Ready:** Uses 256-bit symmetric keys and memory-hard key derivation to stay secure in the quantum era.
@@ -13,86 +13,23 @@
 - **🌓 Dark & Light Mode:** A modern, responsive UI built with React and Tailwind CSS.
 - **⚡ High Performance:** Powered by a Go backend and SQLite for efficient storage.
 
-## 🛠️ Technology Stack
-
-- **Backend:** Go (Golang) 1.25+ with Gin framework
-- **Database:** SQLite
-- **Frontend:** React, Vite, Tailwind CSS, Web Crypto API
-- **Containerization:** Docker & Docker Compose
-
-## 🚀 Getting Started
-
-Follow these instructions to get a copy of the project up and running on your local machine for development and testing purposes.
-
-### Prerequisites
-
-- [Docker](https://www.docker.com/get-started)
-- [Docker Compose](https://docs.docker.com/compose/install/)
-- [Bun](https://bun.sh/) (for frontend development)
-- [Go](https://go.dev/) (for backend development)
-
-### Installation
-
-1.  **Clone the repository**
-    ```bash
-    git clone https://github.com/esaiaswestberg/klistra_nu.git
-    cd klistra_nu
-    ```
-
-2.  **Generate API Types**
-    ```bash
-    ./generate.sh
-    ```
-
-3.  **Configure Environment Variables**
-    Create a `.env` file from the example provided:
-    ```bash
-    cp .env.example .env
-    ```
-
-4.  **Build and Run**
-    Start the application using Docker Compose (Development):
-    ```bash
-    docker-compose -f docker-compose.dev.yml up --build
-    ```
-
-5.  **Access the Application**
-    Open your browser and navigate to:
-    `http://localhost:8080` (or the port specified in your `.env`)
-
-## 📂 Project Structure
-
-```
-klistra_nu/
-├── generate.sh             # API code generation script
-├── openapi.yaml            # API specification
-├── backend/                # Go Backend
-│   ├── api/                # Generated API types
-│   ├── handlers/           # HTTP Handlers
-│   ├── models/             # Data Models
-│   ├── services/           # Core Logic (Encryption, DB)
-│   └── main.go             # Application entry point
-├── frontend/               # React Frontend
-│   ├── src/                # Source code
-│   │   ├── api-types.ts    # Generated TS types
-│   │   ├── lib/crypto.ts   # Client-side encryption logic
-│   └── vite.config.ts      # Vite Configuration
-└── Dockerfile              # Multi-stage Docker build
-```
+...
 
 ## 🔒 Security Architecture
 
-Klistra.nu implements a multi-layered, zero-knowledge security approach:
+Klistra.nu implements a multi-layered security approach:
 
 1.  **Transport Layer:** Standard HTTPS.
-2.  **Application Layer (Text):** 
-    -   **Content Encryption:** Paste content is encrypted using `XChaCha20-Poly1305`.
-    -   **Key Derivation:** Keys are derived using `Argon2id` with a unique, random salt generated for every paste.
-3.  **Client-Side Layer (Files):**
-    -   **File Encryption:** Files are encrypted locally in the browser using `AES-256-GCM` before being sent to the server.
-    -   **Zero-Knowledge:** The server and file storage provider never see the raw file content or the file decryption keys.
+2.  **Client-Side Encryption (Text & Files):** 
+    -   All encryption happens locally in the browser using the **Web Crypto API**.
+    -   **Algorithm:** `AES-256-GCM`.
+3.  **Key Management:**
+    -   **Password Protected (Zero-Knowledge):** Keys are derived from your password using **Argon2id** (WASM). Only a non-reversible access hash is sent to the server for authentication. The server never sees your password or the decryption key.
+    -   **Public Link:** For unprotected pastes, a random master key is generated client-side and stored encrypted on the server. The server returns this key alongside the data when the link is accessed.
 4.  **Quantum Resistance:**
     -   By using 256-bit symmetric keys, Klistra.nu is resistant to Grover's algorithm, maintaining 128-bit security even against future quantum computers.
+5.  **Server Blindness (Protected Pastes):**
+    -   For password-protected pastes, the server and storage provider never see raw text, file content, decryption keys, or your password.
 
 ## 🔌 API Reference
 

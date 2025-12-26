@@ -2,7 +2,7 @@ import { useState, useRef } from 'react';
 import { Lock, Clock, Send, Paperclip, X, File as FileIcon } from 'lucide-react';
 import { createPaste, type CreatePasteRequest } from '../api';
 import { useToast } from './ui/use-toast';
-import { encryptFile } from '../lib/crypto';
+import { encryptFile, generateSalt, deriveKeys, encryptData, generateRandomKey, keyToBase64 } from '../lib/crypto';
 
 export default function CreatePaste() {
   const [text, setText] = useState('');
@@ -83,11 +83,27 @@ export default function CreatePaste() {
     setLoading(true);
     setUploadProgress({});
     try {
+      const salt = generateSalt();
+      let encryptionKey: Uint8Array;
+      let passHash: string | undefined;
+
+      if (password) {
+        const keys = await deriveKeys(password, salt);
+        encryptionKey = keys.encryptionKey;
+        passHash = keys.accessHash;
+      } else {
+        encryptionKey = generateRandomKey();
+        passHash = keyToBase64(encryptionKey);
+      }
+
+      // Encrypt text
+      const encryptedText = await encryptData(text, encryptionKey);
+
       let filesMetadata: { name: string, size: number, url: string, key?: string }[] = [];
       if (selectedFiles.length > 0) {
         filesMetadata = await Promise.all(selectedFiles.map(async (file, index) => {
-          // Encrypt file before upload
-          const { encryptedBlob, keyBase64 } = await encryptFile(file);
+          // Use the same encryption key for files
+          const { encryptedBlob } = await encryptFile(file, encryptionKey);
 
           const url = await uploadFile(encryptedBlob, file.name, (percent) => {
             setUploadProgress(prev => ({ ...prev, [index]: percent }));
@@ -95,17 +111,17 @@ export default function CreatePaste() {
           return {
             name: file.name,
             size: file.size,
-            url: url,
-            key: keyBase64
+            url: url
           };
         }));
       }
 
       const req: CreatePasteRequest = {
-        pasteText: text,
+        pasteText: encryptedText,
         expiry: expiry,
         passProtect: !!password,
-        pass: password,
+        passHash: passHash,
+        salt: salt,
         files: filesMetadata
       };
 

@@ -88,7 +88,9 @@ components:
           maximum: 604800
         passProtect:
           type: boolean
-        pass:
+        passHash:
+          type: string
+        salt:
           type: string
         pasteText:
           type: string
@@ -129,6 +131,10 @@ components:
           nullable: true
         protected:
           type: boolean
+        salt:
+          type: string
+        masterKey:
+          type: string
         timeoutUnix:
           type: integer
           format: int64

@@ -2,10 +2,12 @@ import { useEffect, useState } from 'react';
 import { Copy, Clock, Lock, AlertTriangle, FileText, Unlock, Download, Paperclip } from 'lucide-react';
 import { getPaste, type Paste } from '../api';
 import { useToast } from './ui/use-toast';
-import { decryptFile } from '../lib/crypto';
+import { decryptFile, deriveKeys, decryptData, base64ToKey } from '../lib/crypto';
 
 export default function ViewPaste({ id }: { id: string }) {
   const [paste, setPaste] = useState<Paste | null>(null);
+  const [decryptedText, setDecryptedText] = useState<string | null>(null);
+  const [encryptionKey, setEncryptionKey] = useState<Uint8Array | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [isProtected, setIsProtected] = useState(false);
@@ -21,7 +23,6 @@ export default function ViewPaste({ id }: { id: string }) {
   useEffect(() => {
      if (paste?.timeoutUnix) {
         const timer = setInterval(() => {
-           // We know timeoutUnix is defined here because of the check
            const diff = (paste.timeoutUnix as number) - Math.floor(Date.now() / 1000);
            if (diff <= 0) {
               setTimeLeft('Expired');
@@ -55,33 +56,66 @@ export default function ViewPaste({ id }: { id: string }) {
         toast({ title: "Password Required", variant: "destructive" });
         return;
      }
-     fetchPaste(password);
-  };
 
-  const fetchPaste = async (pass: string = '') => {
+     if (!paste?.salt) {
+       toast({ title: "Internal Error", description: "Salt missing from response", variant: "destructive" });
+       return;
+     }
+
      setLoading(true);
      try {
-        const data = await getPaste(id, pass);
-        // If protected and neither text nor files exist in response, it means we got metadata (locked)
+       const keys = await deriveKeys(password, paste.salt);
+       const eKey = keys.encryptionKey;
+       const accessHash = keys.accessHash;
+       setEncryptionKey(eKey);
+       await fetchPaste(accessHash, eKey);
+     } catch (err: any) {
+       console.error(err);
+       toast({ title: "Error", description: "Failed to derive keys", variant: "destructive" });
+       setLoading(false);
+     }
+  };
+
+  const fetchPaste = async (token: string = '', keyOverride?: Uint8Array) => {
+     setLoading(true);
+     try {
+        const data = await getPaste(id, token);
         const isLocked = data.protected && data.text === null && data.files === null;
         
         if (isLocked) {
            setPaste(data);
            setIsProtected(true);
         } else {
-           // Unlocked or unprotected
            setPaste(data);
            setIsProtected(false);
+           
+           // Determine key to use
+           let keyToUse = keyOverride || encryptionKey;
+           
+           // If no key override but we have a masterKey from server (unprotected)
+           if (!keyToUse && data.masterKey) {
+             try {
+               keyToUse = base64ToKey(data.masterKey);
+               setEncryptionKey(keyToUse);
+             } catch (e) {
+               console.error("Failed to parse master key", e);
+             }
+           }
+
+           if (keyToUse && data.text) {
+             try {
+               const decrypted = await decryptData(data.text, keyToUse);
+               setDecryptedText(decrypted);
+             } catch (err) {
+               console.error("Decryption failed", err);
+               toast({ title: "Decryption Failed", description: "The key is incorrect.", variant: "destructive" });
+             }
+           }
         }
      } catch (e: any) {
         console.error(e);
         if (e.message === "Unauthorized") {
-             toast({
-                title: "Error",
-                description: "Incorrect password.",
-                variant: "destructive"
-             });
-             // Keep protected state if we were already protected
+             toast({ title: "Error", description: "Incorrect password.", variant: "destructive" });
         } else if (e.message === "NotFound") {
              setError('Paste not found or expired.');
         } else {
@@ -93,12 +127,9 @@ export default function ViewPaste({ id }: { id: string }) {
   };
 
   const copyToClipboard = () => {
-     if (paste?.text) {
-        navigator.clipboard.writeText(paste.text);
-        toast({
-           title: "Copied!",
-           description: "Copied to clipboard.",
-        });
+     if (decryptedText) {
+        navigator.clipboard.writeText(decryptedText);
+        toast({ title: "Copied!", description: "Copied to clipboard." });
      }
   };
 
@@ -111,7 +142,7 @@ export default function ViewPaste({ id }: { id: string }) {
   };
 
   const handleDownload = async (file: any, index: number) => {
-    if (downloading[index]) return;
+    if (downloading[index] || !encryptionKey) return;
     
     setDownloading(prev => ({ ...prev, [index]: true }));
     try {
@@ -119,10 +150,7 @@ export default function ViewPaste({ id }: { id: string }) {
       if (!response.ok) throw new Error("Download failed");
       const blob = await response.blob();
       
-      let finalBlob = blob;
-      if (file.key) {
-        finalBlob = await decryptFile(blob, file.key);
-      }
+      const finalBlob = await decryptFile(blob, encryptionKey);
       
       const url = URL.createObjectURL(finalBlob);
       const a = document.createElement('a');
@@ -144,7 +172,7 @@ export default function ViewPaste({ id }: { id: string }) {
     }
   };
 
-  if (loading && !paste) { // Show loading only if we have NO data yet
+  if (loading && !paste) {
      return <div className="text-center p-10"><div className="animate-spin h-10 w-10 border-4 border-primary border-t-transparent rounded-full mx-auto"></div></div>;
   }
 
@@ -159,7 +187,7 @@ export default function ViewPaste({ id }: { id: string }) {
      );
   }
 
-  if (isProtected && paste?.text === null && paste?.files === null) {
+  if (isProtected && !decryptedText) {
      return (
         <div className="bg-surface/80 backdrop-blur-md rounded-xl p-8 border border-border-color shadow-xl max-w-md mx-auto">
            <div className="flex flex-col items-center gap-6 text-center">
@@ -193,6 +221,18 @@ export default function ViewPaste({ id }: { id: string }) {
      );
   }
 
+  // If not protected but no decryption key, we can't show it
+  if (!isProtected && paste && decryptedText === null && !loading) {
+     return (
+        <div className="bg-surface/80 p-8 rounded-xl border border-warning/50 flex flex-col items-center text-center gap-4">
+           <Lock size={48} className="text-warning" />
+           <h2 className="text-xl font-bold text-warning">Decryption Failed</h2>
+           <p>This paste is encrypted but the decryption key is missing or invalid. If this is a protected paste, please ensure you are using the correct password.</p>
+           <button onClick={() => window.location.href = '/'} className="btn-primary mt-4">Go Home</button>
+        </div>
+     );
+  }
+
   return (
     <div className="bg-surface/80 backdrop-blur-md rounded-xl p-6 border border-border-color shadow-xl flex flex-col gap-4">
        <div className="flex justify-between items-center border-b border-border-color pb-4">
@@ -206,11 +246,11 @@ export default function ViewPaste({ id }: { id: string }) {
           </div>
        </div>
 
-       {paste?.text && (
+       {decryptedText && (
          <div className="relative">
             <textarea
                readOnly
-               value={paste?.text || ''}
+               value={decryptedText}
                className="w-full h-96 bg-input-bg border border-border-color rounded-lg p-4 text-on-surface focus:outline-none resize-none font-mono"
             />
             <button 
@@ -233,7 +273,7 @@ export default function ViewPaste({ id }: { id: string }) {
                <button 
                  key={idx} 
                  onClick={() => handleDownload(file, idx)}
-                 disabled={downloading[idx]}
+                 disabled={downloading[idx] || !encryptionKey}
                  className="flex items-center justify-between bg-surface-variant/30 hover:bg-surface-variant/50 p-3 rounded-lg border border-border-color transition-all group w-full disabled:opacity-50"
                >
                  <div className="flex items-center gap-3 truncate">
@@ -250,7 +290,7 @@ export default function ViewPaste({ id }: { id: string }) {
                    </div>
                  </div>
                  <span className="text-xs text-primary opacity-0 group-hover:opacity-100 transition-opacity">
-                   {file.key ? 'Decrypt & Save' : 'Download'}
+                   Decrypt & Save
                  </span>
                </button>
              ))}
