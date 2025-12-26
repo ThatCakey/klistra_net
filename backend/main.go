@@ -48,7 +48,6 @@ func main() {
 
 	// Static Files (Frontend)
 	r.Static("/assets", "../frontend/dist/assets")
-	r.StaticFile("/vite.svg", "../frontend/dist/vite.svg")
 	
 	// SPA Fallback
 	r.NoRoute(func(c *gin.Context) {
