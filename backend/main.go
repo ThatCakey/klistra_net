@@ -64,7 +64,7 @@ func main() {
 	apiGroup := r.Group("/api")
 
 	// Serve OpenAPI Spec & Swagger UI
-	r.StaticFile("/api/openapi.yaml", "./openapi.yaml")
+	r.StaticFile("/api/openapi.yaml", "../openapi.yaml")
 	r.GET("/api", func(c *gin.Context) {
 		c.Header("Content-Type", "text/html")
 		c.String(200, `<!DOCTYPE html>

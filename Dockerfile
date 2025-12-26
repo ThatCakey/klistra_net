@@ -50,7 +50,7 @@ COPY --from=backend-builder /app/backend/klistra-backend .
 COPY --from=frontend-builder /app/frontend/dist /app/frontend/dist
 
 # Copy openapi.yaml
-COPY openapi.yaml .
+COPY openapi.yaml /app/openapi.yaml
 
 # Expose the port the app runs on
 EXPOSE 8080
