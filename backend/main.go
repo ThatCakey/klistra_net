@@ -1,6 +1,8 @@
 package main
 
 import (
+	"embed"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -13,6 +15,9 @@ import (
 	"github.com/esaiaswestberg/klistra-go/handlers"
 	"github.com/esaiaswestberg/klistra-go/services"
 )
+
+//go:embed static/*
+var staticFS embed.FS
 
 func main() {
 	// Init Services
@@ -50,9 +55,62 @@ func main() {
 
 	// Static Files (Frontend)
 	r.Static("/assets", "../frontend/dist/assets")
-	r.StaticFile("/favicon.svg", "../frontend/dist/favicon.svg")
-	r.StaticFile("/sitemap.xml", "../frontend/dist/sitemap.xml")
-	r.StaticFile("/robots.txt", "../frontend/dist/robots.txt")
+
+	// Helper to serve file with external override support
+	serveFile := func(path string, embeddedPath string) gin.HandlerFunc {
+		return func(c *gin.Context) {
+			extDir := os.Getenv("EXTERNAL_STATIC_DIR")
+			if extDir == "" {
+				extDir = "/app/static"
+			}
+			// Clean path and join with extDir
+			target := filepath.Join(extDir, filepath.Clean(path))
+			if info, err := os.Stat(target); err == nil && !info.IsDir() {
+				c.File(target)
+				return
+			}
+			c.FileFromFS(embeddedPath, http.FS(staticFS))
+		}
+	}
+
+	r.GET("/favicon.svg", serveFile("favicon.svg", "static/favicon.svg"))
+	r.GET("/sitemap.xml", func(c *gin.Context) {
+		extDir := os.Getenv("EXTERNAL_STATIC_DIR")
+		if extDir == "" {
+			extDir = "/app/static"
+		}
+		target := filepath.Join(extDir, "sitemap.xml")
+		if info, err := os.Stat(target); err == nil && !info.IsDir() {
+			c.File(target)
+			return
+		}
+
+		scheme := "https"
+		if c.Request.TLS == nil && c.GetHeader("X-Forwarded-Proto") != "https" {
+			scheme = "http"
+		}
+		baseURL := scheme + "://" + c.Request.Host
+		now := time.Now().Format("2006-01-02")
+
+		sitemap := `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+    <url>
+        <loc>` + baseURL + `/</loc>
+        <lastmod>` + now + `</lastmod>
+        <changefreq>monthly</changefreq>
+        <priority>1.0</priority>
+    </url>
+    <url>
+        <loc>` + baseURL + `/privacy</loc>
+        <lastmod>` + now + `</lastmod>
+        <changefreq>yearly</changefreq>
+        <priority>0.5</priority>
+    </url>
+</urlset>`
+		c.Header("Content-Type", "application/xml")
+		c.String(http.StatusOK, sitemap)
+	})
+	r.GET("/robots.txt", serveFile("robots.txt", "static/robots.txt"))
 	
 	// SPA Fallback & External Static Files
 	r.NoRoute(func(c *gin.Context) {
@@ -101,7 +159,7 @@ func main() {
 	apiGroup := r.Group("/api")
 
 	// Serve OpenAPI Spec & Swagger UI
-	r.StaticFile("/api/openapi.yaml", "../openapi.yaml")
+	r.GET("/api/openapi.yaml", serveFile("api/openapi.yaml", "static/openapi.yaml"))
 	r.GET("/api", func(c *gin.Context) {
 		c.Header("Content-Type", "text/html")
 		c.String(200, `<!DOCTYPE html>

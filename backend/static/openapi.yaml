@@ -1,0 +1,146 @@
+openapi: 3.0.3
+info:
+  title: Klistra.nu API
+  version: 2.0.0
+  description: Secure sharing API (RESTful)
+servers:
+  - url: /api
+paths:
+  /pastes:
+    post:
+      summary: Create a new paste
+      operationId: createPaste
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreatePasteRequest'
+      responses:
+        '201':
+          description: Paste created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Paste'
+        '400':
+          description: Invalid input
+        '500':
+          description: Server error
+
+  /pastes/{id}:
+    get:
+      summary: Get a paste
+      description: Retrieve a paste. If protected, provide password in X-Paste-Password header. If no password provided for protected paste, returns metadata only.
+      operationId: getPaste
+      parameters:
+        - in: path
+          name: id
+          schema:
+            type: string
+          required: true
+          description: Paste ID
+        - in: header
+          name: X-Paste-Password
+          schema:
+            type: string
+          required: false
+          description: Password for protected pastes
+      responses:
+        '200':
+          description: Paste content (or metadata if protected and locked)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Paste'
+        '401':
+          description: Incorrect password
+        '404':
+          description: Paste not found
+
+  /session/last-paste:
+    get:
+      summary: Get last created paste ID from session
+      operationId: getLastPasteSession
+      responses:
+        '200':
+          description: Last created paste ID
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+
+components:
+  schemas:
+    CreatePasteRequest:
+      type: object
+      required:
+        - expiry
+        - passProtect
+        - pasteText
+      properties:
+        expiry:
+          type: integer
+          minimum: 60
+          maximum: 2592000
+        passProtect:
+          type: boolean
+        passHash:
+          type: string
+        salt:
+          type: string
+        pasteText:
+          type: string
+        language:
+          type: string
+          nullable: true
+        files:
+          type: array
+          items:
+            $ref: '#/components/schemas/File'
+
+    File:
+      type: object
+      required:
+        - name
+        - size
+        - url
+      properties:
+        name:
+          type: string
+        size:
+          type: integer
+          format: int64
+        url:
+          type: string
+        key:
+          type: string
+
+    Paste:
+      type: object
+      properties:
+        id:
+          type: string
+        text:
+          type: string
+          nullable: true
+        files:
+          type: array
+          items:
+            $ref: '#/components/schemas/File'
+          nullable: true
+        language:
+          type: string
+          nullable: true
+        protected:
+          type: boolean
+        salt:
+          type: string
+        masterKey:
+          type: string
+        timeoutUnix:
+          type: integer
+          format: int64

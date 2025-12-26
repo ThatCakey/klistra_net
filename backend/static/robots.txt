@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Allow: /privacy
+Disallow: /api/
+Disallow: /*?*
+
+Sitemap: https://klistra.nu/sitemap.xml
