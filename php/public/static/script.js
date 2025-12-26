@@ -1,13 +1,16 @@
 document.documentElement.classList.remove('light-theme');
 
-if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches){
-  console.log("Prefers dark theme");
-  applyTheme("dark");
+if (localStorage.getItem('klistra-theme') == null) {
+  if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+    console.log("Prefers dark theme");
+    applyTheme("dark");
+  }
+  else {
+    console.log("Prefers light theme");
+    applyTheme("light");
+  }
 }
-else{
-  console.log("Prefers light theme");
-  applyTheme("light");
-}
+
 
 const detectColorScheme = () => {
   if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
@@ -64,7 +67,7 @@ window.addEventListener("load", function () {
       var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
       var theme = saved || (prefersDark ? 'dark' : 'light');
       applyTheme(theme);
-    } catch (e) {}
+    } catch (e) { }
   }, 350);
 });
 
@@ -230,9 +233,9 @@ async function getSessionKlisterId() {
   try {
     const response = await fetch(
       window.location.protocol +
-        "//" +
-        window.location.host +
-        "/api/session.php"
+      "//" +
+      window.location.host +
+      "/api/session.php"
     );
 
     if (response.status === 200) {
@@ -394,7 +397,7 @@ function applyTheme(theme) {
   } else {
     document.documentElement.classList.remove('light-theme');
   }
-  try { localStorage.setItem('klistra-theme', theme); } catch (e) {}
+  try { localStorage.setItem('klistra-theme', theme); } catch (e) { }
   var btn = document.getElementById('themeToggle');
   if (btn) btn.textContent = theme === 'light' ? '🌙' : '🌞';
 }
@@ -412,7 +415,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
     var theme = saved || (prefersDark ? 'dark' : 'light');
     applyTheme(theme);
-  } catch (e) {}
+  } catch (e) { }
 });
 
 /* Github: rproenca/Clipboard.js */
