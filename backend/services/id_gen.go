@@ -7,21 +7,31 @@ import (
 	"time"
 )
 
-var wordList = []string{
-	"ape", "bat", "bee", "bug", "cat", "cow", "crab", "crow", "dog", "dove", "duck", "eel", "elk", "fox", "frog", "goat", "hare", "hawk", "jay", "lamb", "lion", "mole", "moose", "mouse", "otter", "owl", "panda", "pig", "pony", "rabbit", "rat", "seal", "shark", "sheep", "snail", "snake", "swan", "tiger", "toad", "whale", "wolf", "zebra",
-	"apple", "banana", "grape", "kiwi", "lemon", "lime", "mango", "melon", "olive", "orange", "peach", "pear", "plum", "prune", "raisin", "berry",
-	"red", "blue", "green", "yellow", "pink", "purple", "teal", "navy", "gold", "ivory", "silver",
-	"book", "cup", "door", "bed", "phone", "shoe", "lamp", "clock", "key", "glass", "plate", "spoon", "fork", "bag",
-	"paris", "rome", "lima", "cairo", "osaka", "lagos", "milan", "perth", "tokyo", "seoul", "delhi", "dubai", "miami", "berlin", "sydney", "madrid", "london", "venice", "dublin", "vienna",
+var adjectives = []string{
+	"happy", "fast", "brave", "bright", "calm", "clever", "cool", "eager", "fancy", "gentle",
+	"grand", "great", "kind", "lively", "lucky", "mighty", "nice", "noble", "proud", "quick",
+	"quiet", "smart", "strong", "sweet", "tough", "wild", "wise", "young", "bold", "crisp",
+	"funny", "jolly", "merry", "silly", "sunny", "vivid", "witty", "zesty", "lazy", "busy",
+}
+
+var nouns = []string{
+	"ape", "bat", "bee", "bug", "cat", "cow", "crab", "crow", "dog", "dove", "duck", "eel",
+	"elk", "fox", "frog", "goat", "hare", "hawk", "jay", "lamb", "lion", "mole", "moose",
+	"mouse", "otter", "owl", "panda", "pig", "pony", "rabbit", "rat", "seal", "shark",
+	"sheep", "snail", "snake", "swan", "tiger", "toad", "whale", "wolf", "zebra",
+	"apple", "banana", "grape", "kiwi", "lemon", "lime", "mango", "melon", "olive", "orange",
+	"book", "cup", "door", "bed", "phone", "shoe", "lamp", "clock", "key", "glass", "plate",
+	"paris", "rome", "lima", "cairo", "osaka", "lagos", "milan", "perth", "tokyo", "seoul",
 }
 
 func GenerateID() (string, error) {
 	r := rand.New(rand.NewSource(time.Now().UnixNano()))
 
 	for i := 0; i < 100; i++ {
-		word := wordList[r.Intn(len(wordList))]
+		adj := adjectives[r.Intn(len(adjectives))]
+		noun := nouns[r.Intn(len(nouns))]
 		digits := r.Intn(90) + 10 // 10-99
-		id := fmt.Sprintf("%s%d", word, digits)
+		id := fmt.Sprintf("%s-%s-%d", adj, noun, digits)
 
 		var data string
 		var expiresAt int64
@@ -32,7 +42,7 @@ func GenerateID() (string, error) {
 	}
 
 	// Fallback
-	return fallbackGenerator(8), nil
+	return fallbackGenerator(12), nil
 }
 
 func fallbackGenerator(length int) string {
