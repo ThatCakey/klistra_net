@@ -19,9 +19,11 @@ services:
     command: ["apache2-foreground"]
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.klistra.rule=Host(`${DOMAIN}`)"
+      - "traefik.http.routers.klistra.rule=Host(`${DOMAIN}`) || Host(`www.${DOMAIN}`)"
       - "traefik.http.routers.klistra.entrypoints=websecure"
       - "traefik.http.routers.klistra.tls.certresolver=le"
+      - "traefik.http.routers.klistra.tls.domains[0].main=${DOMAIN}"
+      - "traefik.http.routers.klistra.tls.domains[0].sans=www.${DOMAIN}"
       - "traefik.http.services.klistra.loadbalancer.server.port=80"
     networks:
       - web
@@ -44,7 +46,10 @@ services:
       - "--providers.docker=true"
       - "--entrypoints.web.address=:80"
       - "--entrypoints.websecure.address=:443"
-      - "--certificatesresolvers.le.acme.tlschallenge=true"
+      - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
+      - "--entrypoints.web.http.redirections.entryPoint.scheme=https"
+      - "--certificatesresolvers.le.acme.httpchallenge=true"
+      - "--certificatesresolvers.le.acme.httpchallenge.entryPoint=web"
       - "--certificatesresolvers.le.acme.email=${LE_EMAIL}"
       - "--certificatesresolvers.le.acme.storage=/letsencrypt/acme.json"
     ports:
