@@ -39,7 +39,7 @@ services:
       - web
 
   traefik:
-    image: traefik:v2.10
+    image: traefik:latest
     command:
       - "--providers.docker=true"
       - "--entrypoints.web.address=:80"
