@@ -26,7 +26,7 @@ RUN bun run build
 
 # Stage 2: Build Backend
 FROM --platform=$BUILDPLATFORM golang:1.25-bookworm AS backend-builder
-COPY --from=xx /
+COPY --from=xx / /
 ARG TARGETPLATFORM
 WORKDIR /app/backend
 
