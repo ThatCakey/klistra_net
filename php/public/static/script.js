@@ -483,6 +483,11 @@ function base64ToArrayBuffer(base64) {
 
 // Transport Encrypt (Obfuscation during transport only)
 async function encryptJSON(jsonData) {
+  if (!window.crypto || !window.crypto.subtle) {
+    swal("Security Warning", "This feature requires a secure connection (HTTPS) because it uses advanced encryption. Please access this site via HTTPS or localhost.", "error");
+    throw new Error("Web Crypto API is not available (requires HTTPS).");
+  }
+
   const keyString = await fetchKey(); // Get key from API
   const key = await crypto.subtle.importKey(
     "raw",
@@ -513,6 +518,11 @@ async function encryptJSON(jsonData) {
 
 // Transport Decrypt (Obfuscation during transport only)
 async function decryptJSON(encryptedBase64) {
+  if (!window.crypto || !window.crypto.subtle) {
+    swal("Security Warning", "This feature requires a secure connection (HTTPS) because it uses advanced encryption. Please access this site via HTTPS or localhost.", "error");
+    throw new Error("Web Crypto API is not available (requires HTTPS).");
+  }
+
   const keyString = await fetchKey(); // Get key from API
   const key = await crypto.subtle.importKey(
     "raw",
