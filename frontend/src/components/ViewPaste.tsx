@@ -60,8 +60,10 @@ export default function ViewPaste({ id }: { id: string }) {
      setLoading(true);
      try {
         const data = await getPaste(id, pass);
-        // If protected and no text, it means we got metadata (locked)
-        if (data.protected && !data.text) {
+        // If protected and neither text nor files exist in response, it means we got metadata (locked)
+        const isLocked = data.protected && data.text === null && data.files === null;
+        
+        if (isLocked) {
            setPaste(data);
            setIsProtected(true);
         } else {
@@ -121,7 +123,7 @@ export default function ViewPaste({ id }: { id: string }) {
      );
   }
 
-  if (isProtected && !paste?.text) {
+  if (isProtected && paste?.text === null && paste?.files === null) {
      return (
         <div className="bg-surface/80 backdrop-blur-md rounded-xl p-8 border border-border-color shadow-xl max-w-md mx-auto">
            <div className="flex flex-col items-center gap-6 text-center">
