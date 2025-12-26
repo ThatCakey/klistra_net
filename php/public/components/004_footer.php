@@ -5,6 +5,6 @@ session_start(); ?>
     <p>
         <a href="/?page=privacy" class="text-primary hover:opacity-80 transition-opacity">Privacy Policy</a>
         -
-        <a href="https://github.com/emanueltilly/klistra_nu" target="_blank" class="text-primary hover:opacity-80 transition-opacity">Contribute on GitHub</a>
+        <a href="https://github.com/esaiaswestberg/klistra_nu" target="_blank" class="text-primary hover:opacity-80 transition-opacity">Contribute on GitHub</a>
     </p>
 </div>
