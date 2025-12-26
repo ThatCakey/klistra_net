@@ -1,5 +1,15 @@
 document.documentElement.classList.remove('light-theme');
 
+if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches){
+  console.log("Prefers dark theme");
+  applyTheme("dark");
+}
+else{
+  console.log("Prefers light theme");
+  applyTheme("light");
+}
+
+
 function loadContent(divId, loadUri) {
   if (document.getElementById(divId) == null) {
     return null;
