@@ -76,7 +76,7 @@ html.light-theme body::after { opacity: 1; }
 
 /* Theme toggle button */
 #themeToggle {
-  background: #00000055;
+  background: #00000033;
   border: 1px solid var(--border-color);
   color: var(--on-surface);
   border-radius: 999px;
