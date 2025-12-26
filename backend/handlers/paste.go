@@ -46,6 +46,7 @@ func (s *Server) CreatePaste(c *gin.Context) {
 		ID:          id,
 		Text:        req.PasteText,
 		Files:       filesJSON,
+		Language:    getStringValue(req.Language),
 		Protected:   req.PassProtect,
 		PassHash:    passHash,
 		TimeoutUnix: timeoutUnix,
@@ -70,11 +71,19 @@ func (s *Server) CreatePaste(c *gin.Context) {
 		TimeoutUnix: &timeoutUnix,
 		Text:        &req.PasteText,
 		Files:       req.Files,
+		Language:    req.Language,
 		Salt:        &salt,
 		MasterKey:   req.PassHash,
 	}
 	
 	c.JSON(http.StatusCreated, resp)
+}
+
+func getStringValue(s *string) string {
+	if s == nil {
+		return ""
+	}
+	return *s
 }
 
 func (s *Server) GetPaste(c *gin.Context, id string, params api.GetPasteParams) {
@@ -101,6 +110,7 @@ func (s *Server) GetPaste(c *gin.Context, id string, params api.GetPasteParams) 
 			Protected:   &paste.Protected,
 			TimeoutUnix: &paste.TimeoutUnix,
 			Salt:        &paste.Salt,
+			Language:    &paste.Language,
 			Text:        nil,
 			Files:       nil,
 		})
@@ -123,6 +133,7 @@ func (s *Server) GetPaste(c *gin.Context, id string, params api.GetPasteParams) 
 		Protected:   &paste.Protected,
 		TimeoutUnix: &paste.TimeoutUnix,
 		Salt:        &paste.Salt,
+		Language:    &paste.Language,
 		Text:        &paste.Text,
 		Files:       &files,
 		MasterKey:   masterKey,

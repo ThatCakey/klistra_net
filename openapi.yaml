@@ -94,6 +94,9 @@ components:
           type: string
         pasteText:
           type: string
+        language:
+          type: string
+          nullable: true
         files:
           type: array
           items:
@@ -128,6 +131,9 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/File'
+          nullable: true
+        language:
+          type: string
           nullable: true
         protected:
           type: boolean

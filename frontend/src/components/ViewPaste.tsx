@@ -7,6 +7,7 @@ import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { dracula, oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
 import hljs from 'highlight.js';
 import ReactMarkdown from 'react-markdown';
+import { LANGUAGES } from '../lib/languages';
 
 function TimeLeft({ timeoutUnix }: { timeoutUnix: number }) {
   const [timeLeft, setTimeLeft] = useState('');
@@ -54,11 +55,19 @@ export default function ViewPaste({ id }: { id: string }) {
   const [password, setPassword] = useState('');
   const [downloading, setDownloading] = useState<Record<number, boolean>>({});
   const [renderMode, setRenderMode] = useState<'auto' | 'raw'>('auto');
+  const [selectedLanguage, setSelectedLanguage] = useState<string>('');
   const [theme, setTheme] = useState(() => document.documentElement.classList.contains('light') ? 'light' : 'dark');
   const { toast } = useToast();
 
-  const { detectedLanguage, isMarkdown } = useMemo(() => {
-    if (!decryptedText) return { detectedLanguage: 'text', isMarkdown: false };
+  const { displayLanguage, isMarkdown } = useMemo(() => {
+    if (!decryptedText) return { displayLanguage: 'text', isMarkdown: false };
+
+    if (selectedLanguage) {
+      return {
+        displayLanguage: selectedLanguage,
+        isMarkdown: selectedLanguage === 'markdown'
+      };
+    }
     
     // Heuristics for Markdown detection
     const hasMarkdownMarkers = 
@@ -76,10 +85,10 @@ export default function ViewPaste({ id }: { id: string }) {
     const md = lang === 'markdown' || (lang === 'text' && hasMarkdownMarkers) || hasMarkdownMarkers;
 
     return {
-      detectedLanguage: md ? 'markdown' : lang,
+      displayLanguage: md ? 'markdown' : (lang || 'text'),
       isMarkdown: md
     };
-  }, [decryptedText]);
+  }, [decryptedText, selectedLanguage]);
 
   const isLight = theme === 'light';
 
@@ -100,6 +109,12 @@ export default function ViewPaste({ id }: { id: string }) {
   useEffect(() => {
     fetchPaste();
   }, [id]);
+
+  useEffect(() => {
+    if (paste?.language) {
+      setSelectedLanguage(paste.language);
+    }
+  }, [paste?.language]);
 
   const handleUnlock = async (e: React.FormEvent) => {
      e.preventDefault();
@@ -321,7 +336,7 @@ export default function ViewPaste({ id }: { id: string }) {
         </div>
 
         {decryptedText && (
-          <div className="relative group/textarea min-h-96">
+          <div className="relative group/textarea">
              {renderMode === 'auto' && isMarkdown ? (
                 <div className="w-full bg-input-bg/50 border border-border-color/50 rounded-xl backdrop-blur-sm p-8">
                    <div className={`prose prose-sm max-w-none ${isLight ? 'prose-slate' : 'prose-invert prose-pink'} 
@@ -373,10 +388,10 @@ export default function ViewPaste({ id }: { id: string }) {
                       </ReactMarkdown>
                    </div>
                 </div>
-             ) : renderMode === 'auto' && detectedLanguage !== 'text' ? (
+             ) : renderMode === 'auto' && displayLanguage !== 'text' ? (
                 <div className="w-full bg-input-bg/50 border border-border-color/50 rounded-xl backdrop-blur-sm overflow-hidden">
                   <SyntaxHighlighter
-                    language={detectedLanguage || 'text'}
+                    language={displayLanguage || 'text'}
                     style={isLight ? oneLight : dracula}
                     customStyle={{
                       margin: 0,
@@ -407,7 +422,17 @@ export default function ViewPaste({ id }: { id: string }) {
              )}
              
              <div className="absolute top-4 right-4 flex gap-2">
-               {(detectedLanguage !== 'text') && (
+               <select 
+                  value={selectedLanguage}
+                  onChange={(e) => setSelectedLanguage(e.target.value)}
+                  className="px-3 py-1.5 bg-surface/80 backdrop-blur-md rounded-xl border border-border-color/50 text-[10px] font-black uppercase tracking-widest focus:outline-none focus:ring-1 focus:ring-primary/50 transition-all appearance-none cursor-pointer"
+               >
+                  {LANGUAGES.map(lang => (
+                    <option key={lang.value} value={lang.value}>{lang.label}</option>
+                  ))}
+               </select>
+
+               {(displayLanguage !== 'text') && (
                  <button
                     onClick={() => setRenderMode(renderMode === 'auto' ? 'raw' : 'auto')}
                     className={`p-2.5 backdrop-blur-md rounded-xl border border-border-color/50 transition-all shadow-lg group/toggle ${
@@ -427,9 +452,9 @@ export default function ViewPaste({ id }: { id: string }) {
                </button>
              </div>
 
-             {renderMode === 'auto' && detectedLanguage !== 'text' && (
+             {renderMode === 'auto' && displayLanguage !== 'text' && (
                <div className="absolute bottom-4 right-6 text-[10px] font-black uppercase tracking-widest text-subtle-gray bg-surface/80 backdrop-blur-md px-2 py-1 rounded border border-border-color/50 pointer-events-none">
-                 {isMarkdown ? 'Markdown' : detectedLanguage}
+                 {isMarkdown ? 'Markdown' : (LANGUAGES.find(l => l.value === displayLanguage)?.label || displayLanguage)}
                </div>
              )}
           </div>

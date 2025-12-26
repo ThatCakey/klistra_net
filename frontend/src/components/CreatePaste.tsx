@@ -1,12 +1,14 @@
 import { useState, useRef } from 'react';
-import { Lock, Clock, Send, Paperclip, X, File as FileIcon } from 'lucide-react';
+import { Lock, Clock, Send, Paperclip, X, File as FileIcon, Code } from 'lucide-react';
 import { createPaste, type CreatePasteRequest } from '../api';
 import { useToast } from './ui/use-toast';
 import { encryptFile, generateSalt, deriveKeys, encryptData, generateRandomKey, keyToBase64 } from '../lib/crypto';
+import { LANGUAGES } from '../lib/languages';
 
 export default function CreatePaste() {
   const [text, setText] = useState('');
   const [expiry, setExpiry] = useState(604800);
+  const [language, setLanguage] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
@@ -122,6 +124,7 @@ export default function CreatePaste() {
         passProtect: !!password,
         passHash: passHash,
         salt: salt,
+        language: language || undefined,
         files: filesMetadata
       };
 
@@ -272,6 +275,25 @@ export default function CreatePaste() {
                     <option value={604800}>1 Week</option>
                     <option value={1209600}>2 Weeks</option>
                     <option value={2592000}>1 Month</option>
+                 </select>
+                 <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-subtle-gray">
+                    <svg className="h-4 w-4 fill-current" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" /></svg>
+                 </div>
+              </div>
+
+              {/* Language Select */}
+              <div className="relative group/select">
+                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-subtle-gray group-focus-within/select:text-primary transition-colors">
+                    <Code size={16} />
+                 </div>
+                 <select 
+                    value={language} 
+                    onChange={(e) => setLanguage(e.target.value)}
+                    className="pl-10 pr-8 py-2.5 bg-input-bg/50 border border-border-color/50 rounded-xl appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/50 w-full md:w-44 text-sm font-medium backdrop-blur-sm transition-all"
+                 >
+                    {LANGUAGES.map(lang => (
+                      <option key={lang.value} value={lang.value}>{lang.label}</option>
+                    ))}
                  </select>
                  <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-subtle-gray">
                     <svg className="h-4 w-4 fill-current" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" /></svg>
