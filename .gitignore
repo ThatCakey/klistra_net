@@ -2,6 +2,7 @@
 redis
 backend/klistra.db
 backend/tmp
+tmp
 frontend/dist
 frontend/node_modules
 

@@ -1,4 +1,15 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
-  <rect width="100" height="100" rx="20" fill="#f43f5e"/>
-  <path d="M30 25 V75 M30 50 L65 25 M30 50 L65 75" stroke="white" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <style>
+    @media (prefers-color-scheme: dark) {
+      .bg { fill: #f43f5e; }
+      .symbol { stroke: white; }
+    }
+    @media (prefers-color-scheme: light) {
+      .bg { fill: #f43f5e; }
+      .symbol { stroke: white; }
+    }
+    /* We can also make it adapt more drastically if we want */
+  </style>
+  <rect class="bg" width="100" height="100" rx="20" fill="#f43f5e"/>
+  <path class="symbol" d="M30 25 V75 M30 50 L65 25 M30 50 L65 75" stroke="white" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
 </svg>
