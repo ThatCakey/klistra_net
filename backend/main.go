@@ -11,6 +11,9 @@ import (
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"
 	"github.com/gin-gonic/gin"
+	"github.com/ulule/limiter/v3"
+	mgin "github.com/ulule/limiter/v3/drivers/middleware/gin"
+	"github.com/ulule/limiter/v3/drivers/store/memory"
 	"github.com/esaiaswestberg/klistra-go/api"
 	"github.com/esaiaswestberg/klistra-go/handlers"
 	"github.com/esaiaswestberg/klistra-go/services"
@@ -32,6 +35,23 @@ func main() {
 	}()
 
 	r := gin.Default()
+
+	// Rate Limiting
+	// Define a limit: 60 requests per minute
+	generalRate := limiter.Rate{
+		Period: 1 * time.Minute,
+		Limit:  60,
+	}
+	generalStore := memory.NewStore()
+	generalMiddleware := mgin.NewMiddleware(limiter.New(generalStore, generalRate))
+
+	// Stricter limit for paste creation: 5 requests per minute
+	createRate := limiter.Rate{
+		Period: 1 * time.Minute,
+		Limit:  5,
+	}
+	createStore := memory.NewStore()
+	createMiddleware := mgin.NewMiddleware(limiter.New(createStore, createRate))
 
 	// Session Store
 	sessionSecret := os.Getenv("SESSION_SECRET")
@@ -157,36 +177,24 @@ func main() {
 	// API Routes
 	server := handlers.NewServer()
 	apiGroup := r.Group("/api")
+	apiGroup.Use(generalMiddleware)
+
+	// Register handlers manually to apply specific middleware to POST /pastes
+	// We can't easily use api.RegisterHandlers if we want different middleware per route
+	// So we'll register them individually or wrap the interface
+	
+	wrapper := api.ServerInterfaceWrapper{
+		Handler: server,
+		ErrorHandler: func(c *gin.Context, err error, statusCode int) {
+			c.JSON(statusCode, gin.H{"msg": err.Error()})
+		},
+	}
+
+	apiGroup.POST("/pastes", createMiddleware, wrapper.CreatePaste)
+	apiGroup.GET("/pastes/:id", wrapper.GetPaste)
+	apiGroup.GET("/session/last-paste", wrapper.GetLastPasteSession)
 
 	// Serve OpenAPI Spec & Swagger UI
-	r.GET("/api/openapi.yaml", serveFile("api/openapi.yaml", "static/openapi.yaml"))
-	r.GET("/api", func(c *gin.Context) {
-		c.Header("Content-Type", "text/html")
-		c.String(200, `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="description" content="SwaggerUI" />
-  <title>Klistra.nu API</title>
-  <link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5.11.0/swagger-ui.css" />
-</head>
-<body>
-<div id="swagger-ui"></div>
-<script src="https://unpkg.com/swagger-ui-dist@5.11.0/swagger-ui-bundle.js" crossorigin></script>
-<script>
-  window.onload = () => {
-    window.ui = SwaggerUIBundle({
-      url: '/api/openapi.yaml',
-      dom_id: '#swagger-ui',
-    });
-  };
-</script>
-</body>
-</html>`)
-	})
-
-	api.RegisterHandlers(apiGroup, server)
 
 	port := os.Getenv("PORT")
 	if port == "" {
