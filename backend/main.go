@@ -90,9 +90,16 @@ func main() {
 			if extDir == "" {
 				extDir = "/app/static"
 			}
-			// Clean path and join with extDir
-			target := filepath.Join(extDir, filepath.Clean(path))
-			if info, err := os.Stat(target); err == nil && !info.IsDir() {
+			// Securely join and check if file exists in the external directory
+			// filepath.Clean is not enough on its own if extDir is empty or relative
+			absExtDir, err := filepath.Abs(extDir)
+			if err != nil {
+				c.FileFromFS(embeddedPath, http.FS(staticFS))
+				return
+			}
+
+			target := filepath.Join(absExtDir, filepath.Clean("/"+path))
+			if info, err := os.Stat(target); err == nil && !info.IsDir() && strings.HasPrefix(target, absExtDir) {
 				c.File(target)
 				return
 			}
@@ -106,8 +113,10 @@ func main() {
 		if extDir == "" {
 			extDir = "/app/static"
 		}
-		target := filepath.Join(extDir, "sitemap.xml")
-		if info, err := os.Stat(target); err == nil && !info.IsDir() {
+		
+		absExtDir, _ := filepath.Abs(extDir)
+		target := filepath.Join(absExtDir, "sitemap.xml")
+		if info, err := os.Stat(target); err == nil && !info.IsDir() && strings.HasPrefix(target, absExtDir) {
 			c.File(target)
 			return
 		}
@@ -116,7 +125,14 @@ func main() {
 		if c.Request.TLS == nil && c.GetHeader("X-Forwarded-Proto") != "https" {
 			scheme = "http"
 		}
-		baseURL := scheme + "://" + c.Request.Host
+		
+		// Basic validation of host to prevent injection
+		host := c.Request.Host
+		if strings.ContainsAny(host, "<>\"' \n\r") {
+			host = "klistra.nu"
+		}
+
+		baseURL := scheme + "://" + host
 		now := time.Now().Format("2006-01-02")
 
 		sitemap := `<?xml version="1.0" encoding="UTF-8"?>
@@ -150,10 +166,13 @@ func main() {
 		}
 		
 		// Securely join and check if file exists in the external directory
-		target := filepath.Join(extDir, filepath.Clean(path))
-		if info, err := os.Stat(target); err == nil && !info.IsDir() {
-			c.File(target)
-			return
+		absExtDir, err := filepath.Abs(extDir)
+		if err == nil {
+			target := filepath.Join(absExtDir, filepath.Clean("/"+path))
+			if info, err := os.Stat(target); err == nil && !info.IsDir() && strings.HasPrefix(target, absExtDir) {
+				c.File(target)
+				return
+			}
 		}
 
 		// If path starts with /api, return 404
