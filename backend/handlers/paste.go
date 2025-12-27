@@ -13,9 +13,24 @@ import (
 )
 
 func (s *Server) CreatePaste(c *gin.Context) {
+	// Limit request body size to 11MB (10MB text + metadata)
+	c.Request.Body = http.MaxBytesReader(c.Writer, c.Request.Body, 11*1024*1024)
+
 	var req api.CreatePasteRequest
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Validate expiry
+	if req.Expiry < 60 || req.Expiry > 2592000 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Expiry must be between 60 and 2592000 seconds"})
+		return
+	}
+
+	// Validate text presence
+	if req.PasteText == "" && (req.Files == nil || len(*req.Files) == 0) {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Paste must have text or files"})
 		return
 	}
 
